@@ -22,7 +22,7 @@ class RateLimitMiddleware
         $key = $user ? "graphql|{$user->id}" : "graphql|{$request->ip()}";
 
         if (RateLimiter::tooManyAttempts($key, 60)) {
-            throw new CustomException('Too Many Attempts. Please try again after some time.');
+            throw new CustomException(trans('bagisto_graphql::app.rate-limit.too-many-attempts'));
         }
 
         RateLimiter::hit($key);

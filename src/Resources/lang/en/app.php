@@ -691,4 +691,8 @@ return [
     'email' => [
         'configuration-error' => 'Warning: Email configuration not found.',
     ],
+
+    'rate-limit' => [
+        'too-many-attempts' => 'Too Many Attempts. Please try again after some time.',
+    ],
 ];
