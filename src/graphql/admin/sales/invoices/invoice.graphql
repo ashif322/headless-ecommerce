@@ -72,6 +72,7 @@ type Invoice {
     incrementId: String @rename(attribute: "increment_id")
     state: String
     emailSent: Int @rename(attribute: "email_sent")
+    invoiceUrl: String @field(resolver: "Webkul\\GraphQLAPI\\Queries\\Shop\\Customer\\InvoiceQuery@getInvoiceUrl")
     totalQty: Int @rename(attribute: "total_qty")
     baseCurrencyCode: String @rename(attribute: "base_currency_code")
     channelCurrencyCode: String @rename(attribute: "channel_currency_code")
