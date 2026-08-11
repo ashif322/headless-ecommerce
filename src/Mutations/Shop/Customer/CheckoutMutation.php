@@ -466,6 +466,16 @@ class CheckoutMutation extends Controller
                 throw new CustomException(trans('bagisto_graphql::app.shop.checkout.something-wrong'));
             }
 
+            /**
+             * A suspended customer may view their account/orders, but must not
+             * place new orders. Mirrors the web storefront's checkout guard.
+             */
+            $customer = auth()->guard('api')->user();
+
+            if ($customer && $customer->is_suspended) {
+                throw new CustomException(trans('shop::app.checkout.cart.suspended-account-message'));
+            }
+
             Cart::collectTotals();
 
             $this->validateOrder();

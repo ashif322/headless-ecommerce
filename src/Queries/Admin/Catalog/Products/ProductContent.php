@@ -299,7 +299,40 @@ class ProductContent extends BaseFilter
      */
     public function getReviews($product)
     {
-        return $product->reviews->where('status', 'approved');
+        $reviews = $product->reviews->where('status', 'approved');
+
+        if (core()->getConfigData('catalog.products.review.censoring_reviewer_name')) {
+            $reviews->each(function ($review) {
+                $review->name = $this->censorReviewerName($review->name);
+            });
+        }
+
+        return $reviews;
+    }
+
+    /**
+     * Reviewer profile image, matching the web storefront's `profile` field.
+     * Null for guest reviews (no customer).
+     *
+     * @return string|null
+     */
+    public function getReviewerProfile($review)
+    {
+        return $review->customer?->image_url;
+    }
+
+    /**
+     * Censor a reviewer name, e.g. "John Doe" -> "J*** D**".
+     */
+    private function censorReviewerName(?string $name): ?string
+    {
+        if (empty($name)) {
+            return $name;
+        }
+
+        return collect(explode(' ', $name))
+            ->map(fn ($part) => substr($part, 0, 1).str_repeat('*', max(strlen($part) - 1, 0)))
+            ->join(' ');
     }
 
     /**

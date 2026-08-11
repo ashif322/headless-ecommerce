@@ -103,6 +103,7 @@ class BagistoGraphql
             && $user->status !== 1
         ) {
             $message = trans('bagisto_graphql::app.shop.customers.login.not-activated');
+            $reason = 'account_inactive';
         }
 
         if (
@@ -110,14 +111,13 @@ class BagistoGraphql
             && $user->is_verified !== 1
         ) {
             $message = trans('bagisto_graphql::app.shop.customers.login.verify-first');
+            $reason = 'email_not_verified';
         }
 
-        if (
-            isset($user->is_suspended)
-            && $user->is_suspended !== 0
-        ) {
-            $message = trans('bagisto_graphql::app.shop.customers.login.suspended');
-        }
+        /**
+         * A suspended customer is intentionally NOT blocked here. Suspension only
+         * restricts new activity (placing orders — enforced in CheckoutMutation)
+         */
 
         if (isset($message)) {
             if ($token) {
@@ -126,7 +126,7 @@ class BagistoGraphql
 
             auth()->guard($guard)->logout();
 
-            throw new CustomException($message);
+            throw new CustomException($message, ['reason' => $reason]);
         }
 
         return $user;

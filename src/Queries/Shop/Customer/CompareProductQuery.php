@@ -3,10 +3,20 @@
 namespace Webkul\GraphQLAPI\Queries\Shop\Customer;
 
 use Illuminate\Database\Eloquent\Builder;
+use Webkul\Customer\Repositories\CompareItemRepository;
 use Webkul\GraphQLAPI\Queries\BaseFilter;
+use Webkul\Product\Repositories\ProductRepository;
 
 class CompareProductQuery extends BaseFilter
 {
+    /**
+     * Create a new instance.
+     */
+    public function __construct(
+        protected ProductRepository $productRepository,
+        protected CompareItemRepository $compareItemRepository
+    ) {}
+
     /**
      * Filter query for compare products.
      */
@@ -42,5 +52,33 @@ class CompareProductQuery extends BaseFilter
         $customer = bagisto_graphql()->authorize();
 
         return $query->where('customer_id', $customer->id);
+    }
+
+    /**
+     * Get products for the compare page — one query for guests and customers.
+     *
+     */
+    public function getProductsByIds(mixed $rootValue, array $args)
+    {
+        try {
+            $customer = auth()->guard('api')->user();
+        } catch (\Exception $e) {
+            $customer = null;
+        }
+
+        if ($customer) {
+            $productIds = $this->compareItemRepository
+                ->findByField('customer_id', $customer->id)
+                ->pluck('product_id')
+                ->toArray();
+        } else {
+            $productIds = $args['productIds'] ?? [];
+        }
+
+        if (empty($productIds)) {
+            return [];
+        }
+
+        return $this->productRepository->whereIn('id', $productIds)->get();
     }
 }

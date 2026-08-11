@@ -1,4 +1,11 @@
 #Shop\Customer\CompareProduct Related APIs
+
+extend type Query {
+    compareProductsList(
+        productIds: [ID!]
+    ): [Product!] @field(resolver: "Webkul\\GraphQLAPI\\Queries\\Shop\\Customer\\CompareProductQuery@getProductsByIds")
+}
+
 extend type Query @guard(with: ["api"]){
     compareProducts (
         input: FilterCompareProductsInput

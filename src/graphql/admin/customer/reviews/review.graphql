@@ -48,6 +48,7 @@ type Review {
     customerId: ID @rename(attribute: "customer_id")
     createdAt: DateTime @rename(attribute: "created_at")
     updatedAt: DateTime @rename(attribute: "updated_at")
+    profile: String @field(resolver: "Webkul\\GraphQLAPI\\Queries\\Admin\\Catalog\\Products\\ProductContent@getReviewerProfile")
     customer: Customer
     product: Product
     images: [ReviewAttachment]

@@ -3,6 +3,7 @@
 namespace Webkul\GraphQLAPI\Queries\Shop\Common;
 
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Nuwave\Lighthouse\Support\Contracts\GraphQLContext;
 use Webkul\Attribute\Repositories\AttributeRepository;
@@ -17,6 +18,7 @@ use Webkul\CMS\Repositories\PageRepository;
 use Webkul\Customer\Repositories\CustomerRepository;
 use Webkul\GraphQLAPI\Queries\BaseFilter;
 use Webkul\GraphQLAPI\Validators\CustomException;
+use Webkul\Marketing\Jobs\UpdateCreateSearchTerm;
 use Webkul\Marketing\Repositories\SearchSynonymRepository;
 use Webkul\Product\Helpers\Toolbar;
 use Webkul\Product\Repositories\ElasticSearchRepository;
@@ -288,11 +290,13 @@ class HomePageQuery extends BaseFilter
 
         $filters = array_filter($args['input']);
 
+        $userParams = [];
+
         foreach ($filters as $input) {
-            $params[$input['key']] = $input['value'];
+            $userParams[$input['key']] = $input['value'];
         }
 
-        $params = array_merge($params ?? [], [
+        $params = array_merge($userParams, [
             'channel_id'           => core()->getCurrentChannel()->id,
             'status'               => 1,
             'visible_individually' => 1,
@@ -301,6 +305,19 @@ class HomePageQuery extends BaseFilter
         $products = $searchEngine === 'elastic'
             ? $this->searchFromElastic($params)
             : $this->searchFromDatabase($params);
+
+        if (! empty($userParams['name'])) {
+            $searchFilters = Arr::except($userParams, ['sort', 'limit', 'page', 'mode']);
+
+            if (count($searchFilters) === 1) {
+                UpdateCreateSearchTerm::dispatch([
+                    'term'       => $userParams['name'],
+                    'results'    => $products->total(),
+                    'channel_id' => core()->getCurrentChannel()->id,
+                    'locale'     => app()->getLocale(),
+                ]);
+            }
+        }
 
         return [
             'paginator_info' => bagisto_graphql()->getPaginatorInfo($products),
